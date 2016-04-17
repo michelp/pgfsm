@@ -64,37 +64,4 @@ CREATE FUNCTION fsm.check_valid_state_insert() RETURNS trigger AS $$
     END;
 $$ LANGUAGE plpgsql;
 
-
-CREATE TRIGGER fsm_machine_check_valid_insert_trigger
-    BEFORE INSERT ON fsm.machine
-    FOR EACH ROW
-    EXECUTE PROCEDURE fsm.check_valid_state_insert();
-
-
-INSERT INTO fsm.transition (name, from_state, transition, to_state)
-    VALUES
-    ('turnstile', 'locked', 'coin', 'unlocked'),
-    ('turnstile', 'locked', 'push', 'locked'),
-    ('turnstile', 'unlocked', 'push', 'locked'),
-    ('turnstile', 'unlocked', 'coin', 'unlocked');
-
-
-INSERT INTO fsm.transition (name, from_state, transition, to_state)
-    VALUES
-    ('door', 'opened', 'close', 'closing'),
-    ('door', 'opened', 'open', 'opened'),
-    ('door', 'closed', 'open', 'opening'),
-    ('door', 'closed', 'close', 'closed'),
-    ('door', 'opening', 'is_opened', 'opened'),
-    ('door', 'closing', 'is_closed', 'closed'),
-    ('door', 'opening', 'close', 'closing'),
-    ('door', 'closing', 'open', 'opening');
-
-
-INSERT into fsm.machine (name, state)
-    VALUES
-    ('door', 'opened'),
-    ('door', 'closed'),
-    ('turnstile', 'locked'),
-    ('turnstile', 'unlocked');
 COMMIT;
