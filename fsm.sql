@@ -31,6 +31,14 @@ CREATE FUNCTION fsm.states_for(text) RETURNS SETOF text AS $$
 $$ LANGUAGE sql;
 
 
+CREATE FUNCTION fsm.do_transition(bigint, text) RETURNS fsm.machine AS $$
+       UPDATE fsm.machine m set state = t.to_state 
+       from fsm.transition t 
+       where m.id = $1 and m.name = t.name and t.from_state = m.state and t.transition = $2 
+       returning m;
+$$ LANGUAGE sql;
+
+
 CREATE FUNCTION fsm.check_valid_state_update() RETURNS trigger AS $$
     BEGIN
         IF NEW.state NOT IN (SELECT to_state FROM fsm.transitions_for(NEW.id)) THEN
@@ -74,7 +82,9 @@ INSERT INTO fsm.transition (name, from_state, transition, to_state)
 INSERT INTO fsm.transition (name, from_state, transition, to_state)
     VALUES
     ('door', 'opened', 'close', 'closing'),
+    ('door', 'opened', 'open', 'opened'),
     ('door', 'closed', 'open', 'opening'),
+    ('door', 'closed', 'close', 'closed'),
     ('door', 'opening', 'is_opened', 'opened'),
     ('door', 'closing', 'is_closed', 'closed'),
     ('door', 'opening', 'close', 'closing'),
