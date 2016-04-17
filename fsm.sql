@@ -1,0 +1,90 @@
+BEGIN;
+DROP SCHEMA IF EXISTS fsm CASCADE;
+CREATE SCHEMA fsm;
+
+
+CREATE TABLE fsm.machine (
+    id BIGSERIAL PRIMARY KEY,
+    name text NOT NULL,
+    state text NOT NULL
+);
+
+
+CREATE TABLE fsm.transition (
+    name text NOT NULL,
+    from_state text NOT NULL,
+    transition text,
+    to_state text
+);
+CREATE UNIQUE INDEX fsm_transition_name_from_state_transition_idx 
+    ON fsm.transition (name, from_state, transition);
+
+
+CREATE FUNCTION fsm.transitions_for(bigint) RETURNS SETOF fsm.transition AS $$
+    select t.* from fsm.transition t, fsm.machine m 
+    where m.id = $1 and t.name = m.name and t.from_state = m.state;
+$$ LANGUAGE sql;
+
+
+CREATE FUNCTION fsm.states_for(text) RETURNS SETOF text AS $$
+    select from_state from fsm.transition where name = $1;
+$$ LANGUAGE sql;
+
+
+CREATE FUNCTION fsm.check_valid_state_update() RETURNS trigger AS $$
+    BEGIN
+        IF NEW.state NOT IN (SELECT to_state FROM fsm.transitions_for(NEW.id)) THEN
+            RAISE EXCEPTION 'Invalid transition %', NEW.state;
+        END IF;
+        RETURN NEW;
+    END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER fsm_machine_check_valid_update_trigger
+    BEFORE UPDATE OF state ON fsm.machine
+    FOR EACH ROW
+    EXECUTE PROCEDURE fsm.check_valid_state_update();
+
+
+CREATE FUNCTION fsm.check_valid_state_insert() RETURNS trigger AS $$
+    BEGIN
+        IF NEW.state NOT IN (SELECT * FROM fsm.states_for(NEW.name)) THEN
+            RAISE EXCEPTION 'Invalid initial state %', NEW.state;
+        END IF;
+        RETURN NEW;
+    END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER fsm_machine_check_valid_insert_trigger
+    BEFORE INSERT ON fsm.machine
+    FOR EACH ROW
+    EXECUTE PROCEDURE fsm.check_valid_state_insert();
+
+
+INSERT INTO fsm.transition (name, from_state, transition, to_state)
+    VALUES
+    ('turnstile', 'locked', 'coin', 'unlocked'),
+    ('turnstile', 'locked', 'push', 'locked'),
+    ('turnstile', 'unlocked', 'push', 'locked'),
+    ('turnstile', 'unlocked', 'coin', 'unlocked');
+
+
+INSERT INTO fsm.transition (name, from_state, transition, to_state)
+    VALUES
+    ('door', 'opened', 'close', 'closing'),
+    ('door', 'closed', 'open', 'opening'),
+    ('door', 'opening', 'is_opened', 'opened'),
+    ('door', 'closing', 'is_closed', 'closed'),
+    ('door', 'opening', 'close', 'closing'),
+    ('door', 'closing', 'open', 'opening');
+
+
+INSERT into fsm.machine (name, state)
+    VALUES
+    ('door', 'opened'),
+    ('door', 'closed'),
+    ('turnstile', 'locked'),
+    ('turnstile', 'unlocked');
+COMMIT;
