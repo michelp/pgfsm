@@ -64,4 +64,9 @@ CREATE FUNCTION fsm.check_valid_state_insert() RETURNS trigger AS $$
     END;
 $$ LANGUAGE plpgsql;
 
+CREATE TRIGGER fsm_machine_check_valid_insert_trigger
+    BEFORE INSERT ON fsm.machine
+    FOR EACH ROW
+    EXECUTE PROCEDURE fsm.check_valid_state_insert();
+
 COMMIT;
