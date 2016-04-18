@@ -3,21 +3,23 @@ DROP SCHEMA IF EXISTS fsm CASCADE;
 CREATE SCHEMA fsm;
 
 
-CREATE TABLE fsm.machine (
-    id BIGSERIAL PRIMARY KEY,
-    name text NOT NULL,
-    state text NOT NULL
-);
-
 
 CREATE TABLE fsm.transition (
     name text NOT NULL,
     from_state text NOT NULL,
     transition text,
-    to_state text
+    to_state text,
+    PRIMARY KEY (name, from_state)
 );
-CREATE UNIQUE INDEX fsm_transition_name_from_state_transition_idx
-    ON fsm.transition (name, from_state, transition);
+
+
+CREATE TABLE fsm.machine (
+    id BIGSERIAL PRIMARY KEY,
+    name text NOT NULL,
+    state text NOT NULL,
+    FOREIGN KEY (name, state) 
+        REFERENCES fsm.transition (name, from_state)
+);
 
 
 CREATE FUNCTION fsm.transitions_for(bigint) RETURNS SETOF fsm.transition AS $$
@@ -61,6 +63,9 @@ CREATE TRIGGER fsm_machine_check_valid_update_trigger
 
 CREATE FUNCTION fsm.check_valid_state_insert() RETURNS trigger AS $$
     BEGIN
+        IF NEW.name not in (select name from fsm.transition) THEN
+            RAISE EXCEPTION 'Invalid FSM name %', NEW.name;
+        END IF;
         IF NEW.state NOT IN (SELECT * FROM fsm.states_for(NEW.name)) THEN
             RAISE EXCEPTION 'Invalid initial state %', NEW.state;
         END IF;
