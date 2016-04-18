@@ -34,7 +34,11 @@ $$ LANGUAGE sql;
 CREATE FUNCTION fsm.do_transition(bigint, text) RETURNS fsm.machine AS $$
        UPDATE fsm.machine m SET state = t.to_state
        FROM fsm.transition t
-       WHERE m.id = $1 AND m.name = t.name AND t.from_state = m.state AND t.transition = $2
+       WHERE
+           m.id = $1 AND
+           m.name = t.name AND
+           t.from_state = m.state AND
+           t.transition = $2
        RETURNING m;
 $$ LANGUAGE sql;
 

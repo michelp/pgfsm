@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(3);
+SELECT plan(4);
 
 select lives_ok($$
 INSERT INTO fsm.transition (name, from_state, transition, to_state)
@@ -31,6 +31,13 @@ INSERT into fsm.machine (name, state)
     ('turnstile', 'locked'),
     ('turnstile', 'unlocked');$$,
     'machine');
+
+select throws_ok($$
+INSERT into fsm.machine (name, state)
+    VALUES
+    ('turnstile', 'bar');$$,
+    'P0001',
+    'Invalid initial state bar');
 
 SELECT * from finish();
 ROLLBACK;
