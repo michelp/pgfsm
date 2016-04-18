@@ -16,26 +16,26 @@ CREATE TABLE fsm.transition (
     transition text,
     to_state text
 );
-CREATE UNIQUE INDEX fsm_transition_name_from_state_transition_idx 
+CREATE UNIQUE INDEX fsm_transition_name_from_state_transition_idx
     ON fsm.transition (name, from_state, transition);
 
 
 CREATE FUNCTION fsm.transitions_for(bigint) RETURNS SETOF fsm.transition AS $$
-    select t.* from fsm.transition t, fsm.machine m 
-    where m.id = $1 and t.name = m.name and t.from_state = m.state;
+    SELECT t.* FROM fsm.transition t, fsm.machine m
+    WHERE m.id = $1 AND t.name = m.name AND t.from_state = m.state;
 $$ LANGUAGE sql;
 
 
 CREATE FUNCTION fsm.states_for(text) RETURNS SETOF text AS $$
-    select from_state from fsm.transition where name = $1;
+    SELECT from_state FROM fsm.transition WHERE name = $1;
 $$ LANGUAGE sql;
 
 
 CREATE FUNCTION fsm.do_transition(bigint, text) RETURNS fsm.machine AS $$
-       UPDATE fsm.machine m set state = t.to_state 
-       from fsm.transition t 
-       where m.id = $1 and m.name = t.name and t.from_state = m.state and t.transition = $2 
-       returning m;
+       UPDATE fsm.machine m SET state = t.to_state
+       FROM fsm.transition t
+       WHERE m.id = $1 AND m.name = t.name AND t.from_state = m.state AND t.transition = $2
+       RETURNING m;
 $$ LANGUAGE sql;
 
 

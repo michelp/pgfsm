@@ -32,6 +32,5 @@ INSERT into fsm.machine (name, state)
     ('turnstile', 'unlocked');$$,
     'machine');
 
-
 SELECT * from finish();
 ROLLBACK;
