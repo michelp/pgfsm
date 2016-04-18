@@ -3,7 +3,6 @@ DROP SCHEMA IF EXISTS fsm CASCADE;
 CREATE SCHEMA fsm;
 
 
-
 CREATE TABLE fsm.transition (
     name text NOT NULL,
     from_state text NOT NULL,
@@ -72,6 +71,7 @@ CREATE FUNCTION fsm.check_valid_state_insert() RETURNS trigger AS $$
         RETURN NEW;
     END;
 $$ LANGUAGE plpgsql;
+
 
 CREATE TRIGGER fsm_machine_check_valid_insert_trigger
     BEFORE INSERT ON fsm.machine
