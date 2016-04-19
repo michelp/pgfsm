@@ -27,7 +27,8 @@ INSERT INTO fsm.machine (name, state)
     ('turnstile', 'bar');
     $$,
     '23503',
-    'insert or update on table "machine" violates foreign key constraint "machine_name_fkey"');
+    'insert or update on table "machine" violates foreign key constraint "machine_name_fkey"',
+    'Cant insert a bogus state');
 
 
 SELECT throws_ok($$
@@ -36,7 +37,8 @@ INSERT INTO fsm.machine (name, state)
     ('fork', 'opened');
     $$,
     '23503',
-    'insert or update on table "machine" violates foreign key constraint "machine_name_fkey"');
+    'insert or update on table "machine" violates foreign key constraint "machine_name_fkey"',
+    'Cant insert a bogus type.');
 
 
 SELECT lives_ok($$
@@ -69,7 +71,7 @@ SELECT throws_ok($$
 
 SELECT lives_ok($$
     SELECT * FROM fsm.do_transition(2, 'open');$$,
-    'Door 2 can go from closed to opening');
+    'Door 2 goes from closed to opening');
 
 
 select is(state, 'opening') FROM fsm.machine WHERE id = 2;
