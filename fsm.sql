@@ -47,7 +47,7 @@ CREATE FUNCTION fsm.do_transition(bigint, text) RETURNS SETOF fsm.machine AS $$
         IF NOT FOUND THEN
             RAISE EXCEPTION 'No valid transition for % named %', $1, $2;
         END IF;
-        RETURN QUERY select * from fsm.machine where id = $1;
+        RETURN QUERY SELECT * FROM fsm.machine WHERE id = $1;
     END;
 $$ LANGUAGE plpgsql;
 
