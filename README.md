@@ -1,5 +1,5 @@
 # sqlfsm
-Simple SQL finite state machine
+Simple SQL finite state machine for Postgres
 
 This is some example code on how to store a simple state machine in
 SQL.  There are two tables, fsm.machine and fsm.transition.  The
