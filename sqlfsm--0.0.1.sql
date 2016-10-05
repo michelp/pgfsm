@@ -1,9 +1,5 @@
-BEGIN;
-DROP SCHEMA IF EXISTS fsm CASCADE;
-CREATE SCHEMA fsm;
 
-
-CREATE TABLE fsm.transition (
+CREATE TABLE transition (
     name text NOT NULL,
     from_state text NOT NULL,
     transition text,
@@ -12,17 +8,17 @@ CREATE TABLE fsm.transition (
 );
 
 
-CREATE TABLE fsm.machine (
+CREATE TABLE machine (
     id BIGSERIAL PRIMARY KEY,
     name text NOT NULL,
     state text NOT NULL,
     FOREIGN KEY (name, state)
-        REFERENCES fsm.transition (name, from_state)
+        REFERENCES transition (name, from_state)
 );
 
 
-CREATE FUNCTION fsm.transitions_for(bigint) RETURNS SETOF fsm.transition AS $$
-    SELECT t.* FROM fsm.transition t, fsm.machine m
+CREATE FUNCTION transitions_for(bigint) RETURNS SETOF transition AS $$
+    SELECT t.* FROM transition t, machine m
     WHERE
         m.id = $1 AND
         t.name = m.name AND
@@ -30,15 +26,15 @@ CREATE FUNCTION fsm.transitions_for(bigint) RETURNS SETOF fsm.transition AS $$
 $$ LANGUAGE sql;
 
 
-CREATE FUNCTION fsm.states_for(text) RETURNS SETOF text AS $$
-    SELECT from_state FROM fsm.transition WHERE name = $1;
+CREATE FUNCTION states_for(text) RETURNS SETOF text AS $$
+    SELECT from_state FROM transition WHERE name = $1;
 $$ LANGUAGE sql;
 
 
-CREATE FUNCTION fsm.do_transition(bigint, text) RETURNS SETOF fsm.machine AS $$
+CREATE FUNCTION do_transition(bigint, text) RETURNS SETOF machine AS $$
     BEGIN
-        UPDATE fsm.machine m SET state = t.to_state
-        FROM fsm.transition t
+        UPDATE machine m SET state = t.to_state
+        FROM transition t
         WHERE
             m.id = $1 AND
             m.name = t.name AND
@@ -47,14 +43,14 @@ CREATE FUNCTION fsm.do_transition(bigint, text) RETURNS SETOF fsm.machine AS $$
         IF NOT FOUND THEN
             RAISE EXCEPTION 'No valid transition for % named %', $1, $2;
         END IF;
-        RETURN QUERY SELECT * FROM fsm.machine WHERE id = $1;
+        RETURN QUERY SELECT * FROM machine WHERE id = $1;
     END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION fsm.check_valid_state_update() RETURNS trigger AS $$
+CREATE FUNCTION check_valid_state_update() RETURNS trigger AS $$
     BEGIN
-        IF NEW.state NOT IN (SELECT to_state FROM fsm.transitions_for(NEW.id)) THEN
+        IF NEW.state NOT IN (SELECT to_state FROM transitions_for(NEW.id)) THEN
             RAISE EXCEPTION 'Invalid transition %', NEW.state;
         END IF;
         RETURN NEW;
@@ -63,14 +59,14 @@ $$ LANGUAGE plpgsql;
 
 
 CREATE TRIGGER fsm_machine_check_valid_update_trigger
-    BEFORE UPDATE OF state ON fsm.machine
+    BEFORE UPDATE OF state ON machine
     FOR EACH ROW
-    EXECUTE PROCEDURE fsm.check_valid_state_update();
+    EXECUTE PROCEDURE check_valid_state_update();
 
 
-CREATE FUNCTION fsm.check_valid_state_insert() RETURNS trigger AS $$
+CREATE FUNCTION check_valid_state_insert() RETURNS trigger AS $$
     BEGIN
-        IF NOT EXISTS (SELECT * FROM fsm.states_for(NEW.name)) THEN
+        IF NOT EXISTS (SELECT * FROM states_for(NEW.name)) THEN
             RAISE EXCEPTION 'Invalid initial state %', NEW.state;
         END IF;
         RETURN NEW;
@@ -79,8 +75,6 @@ $$ LANGUAGE plpgsql;
 
 
 CREATE CONSTRAINT TRIGGER fsm_machine_check_valid_insert_trigger
-    AFTER INSERT ON fsm.machine
+    AFTER INSERT ON machine
     FOR EACH ROW
-    EXECUTE PROCEDURE fsm.check_valid_state_insert();
-
-COMMIT;
+    EXECUTE PROCEDURE check_valid_state_insert();

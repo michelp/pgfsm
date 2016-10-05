@@ -2,7 +2,7 @@ BEGIN;
 SELECT plan(14);
 
 SELECT lives_ok($$
-INSERT INTO fsm.transition (name, from_state, transition, to_state)
+INSERT INTO transition (name, from_state, transition, to_state)
     VALUES
     ('turnstile', 'locked', 'coin', 'unlocked'),
     ('turnstile', 'unlocked', 'push', 'locked');
@@ -11,7 +11,7 @@ INSERT INTO fsm.transition (name, from_state, transition, to_state)
 
 
 SELECT lives_ok($$
-INSERT INTO fsm.transition (name, from_state, transition, to_state)
+INSERT INTO transition (name, from_state, transition, to_state)
     VALUES
     ('door', 'opened', 'close', 'closing'),
     ('door', 'closed', 'open', 'opening'),
@@ -22,7 +22,7 @@ INSERT INTO fsm.transition (name, from_state, transition, to_state)
 
 
 SELECT throws_ok($$
-INSERT INTO fsm.machine (name, state)
+INSERT INTO machine (name, state)
     VALUES
     ('turnstile', 'bar');
     $$,
@@ -32,7 +32,7 @@ INSERT INTO fsm.machine (name, state)
 
 
 SELECT throws_ok($$
-INSERT INTO fsm.machine (name, state)
+INSERT INTO machine (name, state)
     VALUES
     ('fork', 'opened');
     $$,
@@ -42,7 +42,7 @@ INSERT INTO fsm.machine (name, state)
 
 
 SELECT lives_ok($$
-INSERT INTO fsm.machine (id, name, state)
+INSERT INTO machine (id, name, state)
     VALUES
     (1, 'door', 'opened'),
     (2, 'door', 'closed'),
@@ -53,46 +53,46 @@ INSERT INTO fsm.machine (id, name, state)
 
 
 SELECT lives_ok($$
-    UPDATE fsm.machine SET state = 'closing' WHERE id = 1;$$,
+    UPDATE machine SET state = 'closing' WHERE id = 1;$$,
     'door 1 closing');
 
 
 SELECT lives_ok($$
-    UPDATE fsm.machine SET state = 'closed' WHERE id = 1;$$,
+    UPDATE machine SET state = 'closed' WHERE id = 1;$$,
     'door 1 closed');
 
 
 SELECT throws_ok($$
-    UPDATE fsm.machine SET state = 'closing' WHERE id = 2;$$,
+    UPDATE machine SET state = 'closing' WHERE id = 2;$$,
     'P0001',
     'Invalid transition closing',
     'door 1 cant go from closed to closing');
 
 
 SELECT lives_ok($$
-    SELECT * FROM fsm.do_transition(2, 'open');$$,
+    SELECT * FROM do_transition(2, 'open');$$,
     'Door 2 goes from closed to opening');
 
 
-select is(state, 'opening') FROM fsm.machine WHERE id = 2;
+select is(state, 'opening') FROM machine WHERE id = 2;
 
 
 select lives_ok($$
-    SELECT * FROM fsm.do_transition(2, 'is_opened');$$,
+    SELECT * FROM do_transition(2, 'is_opened');$$,
     'Door 2 can go from opening to opened');
 
 
-select is(state, 'opened') FROM fsm.machine WHERE id = 2;
+select is(state, 'opened') FROM machine WHERE id = 2;
 
 
 select throws_ok($$
-    SELECT * FROM fsm.do_transition(2, 'is_opened');$$,
+    SELECT * FROM do_transition(2, 'is_opened');$$,
     'P0001',
     'No valid transition for 2 named is_opened',
     'Door 2 cant go from opened to opening');
 
 
-select is(state, 'opened') FROM fsm.machine WHERE id = 2;
+select is(state, 'opened') FROM machine WHERE id = 2;
 
 
 SELECT * from finish();
