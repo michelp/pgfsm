@@ -1,3 +1,5 @@
+\echo Use "CREATE EXTENSION sqfsm" to load this file. \quit
+
 
 CREATE TABLE transition (
     name text NOT NULL,
