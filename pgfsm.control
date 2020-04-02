@@ -1,4 +1,4 @@
-# sqlfsm extension
+# pgfsm extension
 comment = 'Finite State Machine enforcement with triggers and util functions.'
 default_version = '0.0.1'
 relocatable = true

@@ -1,4 +1,4 @@
-\echo Use "CREATE EXTENSION sqfsm" to load this file. \quit
+\echo Use "CREATE EXTENSION pgfsm" to load this file. \quit
 
 
 CREATE TABLE transition (
