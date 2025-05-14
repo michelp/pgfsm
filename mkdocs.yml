@@ -1,0 +1,12 @@
+site_name: Postgres Finite State Machines
+
+nav:
+  - Home: index.md
+  - Test: test.md
+
+theme:
+  name: mkdocs
+  features:
+    - navigation.expand
+    # - navigation.tabs
+    # - navigation.sections
